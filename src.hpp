@@ -288,11 +288,12 @@ public:
 
     int catchTry() const {
         if (items.empty()) return 0;
-        std::vector<bool> owned(items.size(), false);
+        std::vector<char> owned(items.size(), 0);
+        std::queue<size_t> q;
         // own the smallest id (index 0 since sorted ascending)
-        owned[0] = true;
+        owned[0] = 1;
+        q.push(0);
         int ownedCount = 1;
-        bool changed = true;
         auto canCapture = [&](const Node &my, const Node &wild)->bool{
             for (int atk : my.types) {
                 double mul = 1.0;
@@ -301,15 +302,13 @@ public:
             }
             return false;
         };
-        while (changed) {
-            changed = false;
+        while (!q.empty()) {
+            size_t j = q.front(); q.pop();
             for (size_t i = 0; i < items.size(); ++i) {
                 if (owned[i]) continue;
-                bool ok = false;
-                for (size_t j = 0; j < items.size() && !ok; ++j) if (owned[j]) {
-                    if (canCapture(items[j], items[i])) ok = true;
+                if (canCapture(items[j], items[i])) {
+                    owned[i] = 1; ++ownedCount; q.push(i);
                 }
-                if (ok) { owned[i] = true; ownedCount++; changed = true; }
             }
         }
         return ownedCount;
@@ -351,4 +350,3 @@ public:
     iterator begin() { return iterator(this, 0); }
     iterator end() { return iterator(this, items.size()); }
 };
-
